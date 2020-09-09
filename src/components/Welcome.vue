@@ -129,8 +129,8 @@ export default {
     judgeState(state) {
       if (state == 200) return "空闲中";
       else if (state == 301) return "已开台";
-      else if (state == 302) return "待开单";
-      else if (state == 303) return "待签单";
+      else if (state == 302) return "已开单";
+      else if (state == 303) return "已签单";
       else return "未知状态 " + state;
     },
     handleCurrentChange(newPage) {

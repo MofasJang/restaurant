@@ -54,7 +54,7 @@
           <el-table-column prop="settlementid" label="结账单号" align="center"></el-table-column>
           <el-table-column prop="tablenumber" label="桌号" align="center"></el-table-column>
           <el-table-column prop="staffaccount" label="结账员" align="center"></el-table-column>
-          <el-table-column prop="username" label="客户姓名" align="center"></el-table-column>
+          <el-table-column prop="username" label="客户id" align="center"></el-table-column>
           <el-table-column prop="amounttotal" label="菜品总价" align="center"></el-table-column>
           <el-table-column prop="amountpaid" label="实付金额" align="center"></el-table-column>
           <el-table-column prop="paytime" label="结账时间" align="center"></el-table-column>

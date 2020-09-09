@@ -5,74 +5,48 @@
       <el-breadcrumb-item>服务管理</el-breadcrumb-item>
       <el-breadcrumb-item>签单</el-breadcrumb-item>
     </el-breadcrumb>
-   
-
-     <el-dialog
-        title="确认信息"
-        :visible.sync="dialogVisible1"
-        width="50%"
-        :show-close="false"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-      >
-        <el-form
-          :rules="depositFormRules"
-          :model="depositForm"
-          label-width="140px"
-          ref="depositFormRef"
-        >
-          <el-form-item label="请签名确认" prop="deposit">
-             <el-input
-             v-model="key" 
-             placeholder=""></el-input>
-          </el-form-item>
-        </el-form>
-
-        <span slot="footer">
-          <div>
-            <el-button @click="cancelAccountRegister">Cancel</el-button>
-            <el-button type="primary" @click="OK">Finish</el-button>
-          </div>
-        </span>
-      </el-dialog>
-
 
     <el-card class="addBook-card" shadow="hover">
       <el-alert title="请确定订单的内容" center type="info" show-icon></el-alert>
       <el-divider></el-divider>
-        <el-table stripe max-height="500" :data="booklist">
-        <el-table-column label="order id" prop="order_id">
-          <template slot-scope="scope">
-            <el-popover placement="right" width="300" close-delay="200" trigger="hover">
-              <el-link slot="reference">{{scope.row.order_id}}</el-link>
-              <barcode style="text-align:center" :value="scope.row.order_id">Fail to show barcode.</barcode>
-            </el-popover>
-          </template>
+        <el-table stripe max-height="1000" :data="booklist">
+        <el-table-column label="订单编号" prop="order_id" align="center">
         </el-table-column>
-        <el-table-column label="顾客名称" prop="customer_name">
+        <el-table-column label="桌号" prop="tablenumber" align="center">
         </el-table-column>
-        <el-table-column label="菜品编号" prop="food_id">
+        <el-table-column label="就餐人数" prop="peoplenum" align="center">
         </el-table-column>
-        <el-table-column label="菜品名称" prop="food_name">
+        <el-table-column label="用户编号" prop="userid" align="center">
         </el-table-column>
-        <el-table-column label="菜品数量" prop="food_num">
+        <el-table-column label="菜品编号" prop="food_id" align="center">
         </el-table-column>
-        <el-table-column label="菜品价格" prop="food_price">
+        <el-table-column label="菜品名称" prop="food_name" align="center">
         </el-table-column>
+        <el-table-column label="菜品价格" prop="food_price" align="center">
+        </el-table-column>
+        <el-table-column label="菜品数量" prop="food_num" align="center">
+        </el-table-column>
+        <el-table-column prop="state" label="操作" align="center">
+            <template slot-scope="scope">
+              <el-button
+                type="primary"
+                @click="modifyState(scope.row.tablenumber,scope.row.userid,scope.row.food_price)"
+                :loading="modifyLoading"
+              >确定签单</el-button>
+              <el-button
+                type="danger"
+                :loading="modifyLoading"
+                @click="deleteOrder(scope.row.order_id)"
+              >取消订单</el-button>
+            </template>
+          </el-table-column>
       </el-table>
       <div>总价：￥{{totalPrice}}</div>
-       <div class="btns">
-            <el-button
-            type="primary"
-            @click="dialogVisible1 = true"
-          >确定签单</el-button>
-          <el-button type="primary" @click="cancel">取消</el-button>
-        </div>
       <el-pagination
-        layout="total, prev, pager, next, jumper"
+        layout="prev, pager, next"
         @current-change="handleCurrentChange"
         :current-page="pagenum"
-        :total="this.total-1"
+        :total="total-1"
         page-size="5"
       ></el-pagination>
     </el-card>
@@ -83,41 +57,55 @@
 export default {
   data() {
     return {
-      dialogVisible1: false,
+      dialogVisible: false,
       booklist: [],
       numlist: [],
       pagenum: 1,
       total: 0,
-      key: "",
       totalPrice:0,
       addBookForm: {
-        customer_name: "",
+        tablenumber: "",
+        peoplenum: 1,
+        userid: "",
         food_id: "",
         food_name: "",
+        food_price: "",
         food_num: ""
       },
-      depositForm: {
-        deposit: ""
-      },
       addBookFormRules: {
-        customer_name: [
+        peoplenum: [
           {
             required: true,
-            message: "Please enter the book title",
+            trigger: "blur"
+          }
+        ],
+        tablenumber: [
+          {
+            required: true,
+            trigger: "blur"
+          }
+        ],
+        userid: [
+          {
+            required: true,
             trigger: "blur"
           }
         ],
         food_id: [
           {
             required: true,
-            message: "Please enter the location",
+            trigger: "blur"
+          }
+        ],
+        food_price: [
+          {
+            required: true,
             trigger: "blur"
           }
         ],
         food_num: [
           {
             required: true,
-            message: "Please enter the price",
             trigger: "blur"
           }
         ]
@@ -126,92 +114,10 @@ export default {
   },
   created() {
       this.getBookList();
-//    this.getPrice();
   },
   methods: {
     getBookList() {
-      // 修改这里以从后端调取信息
-      /*
-       if (this.pagenum == 1) {
-        this.booklist = [
-          {
-            order_id: "00001",
-            customer_name: "Villa in heavy snow",
-            food_id: "Higashino Keigo",
-            food_name: "Math",
-            food_num: "23"
-          },
-          {
-            book_id: "00002",
-            bookname: "Ten Mile Peach",
-            author: "Tang Qigongzi",
-            category: "Geography",
-            location: "3 floor, bookcase No.44",
-            price: "34",
-            state: "Not loaned"
-          },
-          {
-            book_id: "00003",
-            bookname: "Why Sheng Xiaomo",
-            author: "Gu Man",
-            category: "Science",
-            location: "5 floor, bookcase No.3",
-            price: "53",
-            state: "Lost"
-          },
-          {
-            book_id: "00004",
-            bookname: "Brief history of humanity",
-            author: "[Israel] Yuval Herali",
-            category: "History",
-            location: "2 floor, bookcase No.13",
-            price: "46",
-            state: "Not loaned"
-          },
-          {
-            book_id: "00005",
-            bookname: "Those things in the Ming Dynasty",
-            author: "DangNianMingyue",
-            category: "History",
-            location: "1 floor, bookcase No.66",
-            price: "55",
-            state: "Loaned out"
-          }
-        ];
-      }
-      if (this.pagenum == 2) {
-        this.booklist = [
-          {
-            book_id: "00006",
-            bookname: "Few people",
-            author: "M. Scott Parker",
-            category: "Social",
-            location: "4 floor, bookcase No.43",
-            price: "53",
-            state: "Not loaned"
-          },
-          {
-            book_id: "00007",
-            bookname: "Pursuing the meaning of life",
-            author: "[Austria] Victor Frank",
-            category: "Human",
-            location: "3 floor, bookcase No.22",
-            price: "47",
-            state: "Not loaned"
-          },
-          {
-            book_id: "00008",
-            bookname: "Secret garden",
-            author: "Johanna Besford",
-            category: "Art",
-            location: "5 floor, bookcase No.37",
-            price: "75",
-            state: "Not loaned"
-          }
-        ];
-      }
-      this.total = 8;
- */
+        // 修改这里以从后端调取信息
         this.$axios.get("https://cdn.guoshaocong.cn/getorderinfo",{
           }).then((res) =>  {
             var table = res.data.result;
@@ -222,48 +128,24 @@ export default {
             var index = (pagenow-1)*5;
             console.log(index);
             this.booklist=[];
-            this.numlist=[];
+            
             for(var i=index;i<this.total&& i<index+5;i++){
               this.booklist.push(table[i]);
-              this.numlist.push(table[i].food_num);
+              this.totalPrice += table[i].food_num*table[i].food_price ;
             }
             console.log(res);
         });
-       this.getB();
       this.$message.success("已取得订单列表");
-      this.charge();
-    },
-    getB() 
-    {
-         this.$axios.get("https://cdn.guoshaocong.cn/getpriceinfo",{
-          }).then((req) =>  {
-   //         this.$message.success("hahahahaha");
-            var table = req.data.result;
-            console.log(req);
-            this.totalPrice = 0;
-            this.total=table.length;   
-            var pagenow=this.pagenum;
-            console.log(pagenow);
-            var index = (pagenow-1)*5;
-            console.log(index);
-      //      this.booklist=[];
-            for(var i=index;i<this.total&& i<index+5;i++){
-             this.booklist[i].food_price=table[i].food_price;
-    //           this.booklist.push(table[i]);
-                this.totalPrice += this.numlist[i]*table[i].food_price ;
-            }
-            console.log(req);
-        });
-    },
-    OK()
-    {
-        this.dialogVisible1 = true;
-        this.$message.success("已签名确认");
-        this.dialogVisible1 = false;
-        this.$refs.depositFormRef.resetFields();
     },
     confirm()
     {
+//        for(var i=index;i<this.total&& i<index+5;i++){
+//              this.$axios.get("https://cdn.guoshaocong.cn/getorderinfo",{
+//          }).then((res) =>  {
+//            var table = res.data.result;
+            
+//        });
+//            }
         this.$message.success("开单成功！");
     },
     send()
@@ -288,44 +170,39 @@ export default {
       this.dialogVisible = false;
       this.$refs.addBookFormRef.resetFields();
     },
-    cancelAccountRegister() {
-      this.dialogVisible1 = false;
-      this.$refs.depositFormRef.resetFields();
+    modifyState(tablenumber,userid,food_price) {
+      this.$axios
+            .post("https://cdn.guoshaocong.cn/addbill", {
+              tablenumber: tablenumber,
+              username:userid,
+              amounttotal:food_price
+            })
+            .then(response => {
+              if (response.data.state == 200) {
+                this.$message.success("签单成功");
+                this.modifyLoading = false;
+              } 
+            })
+            .catch(function(error) {
+              console.log(error);
+            });
     },
-    continueAccountRegister() {
-      this.$refs.depositFormRef.validate(async valid => {
-        if (!valid) return false;
-        this.dialogVisible1 = false;
-        this.dialogVisible2 = true;
-      });
-    },
-    backAccountRegister() {
-      this.dialogVisible1 = true;
-      this.dialogVisible2 = false;
-    },
-    completeAccountRegister() {
-      this.$refs.accountRegisterFormRef.validate(async valid => {
-        if (!valid) return false;
-        this.dialogVisible2 = false;
-//        this.$refs.depositFormRef.resetFields();
-//        this.$refs.accountRegisterFormRef.resetFields();
-          this.$http.post("/api/user/register_account",{
-                  account: this.accountRegisterForm.username,
-                  password: this.accountRegisterForm.password,
-                  email: this.accountRegisterForm.email
-                }).then((res) => {
-                  console.log(res);
-               });
-        return this.$message.success(
-          "Register the reader account successfully"
-        );
-      });
-    },
-    finishAccountRegister() {
-      this.$refs.accountRegisterFormRef.validate(async valid => {
-        if (!valid) return (this.popconfrimDisabled = true);
-        this.popconfrimDisabled = false;
-      });
+    deleteOrder(theorder_id)
+    {
+       this.$axios
+            .post("https://cdn.guoshaocong.cn/deleteorder", {
+              order_id: theorder_id
+            })
+            .then(response => {
+              if (response.data.state == 200) {
+                this.$message.success("订单已取消");
+                this.modifyLoading = false;
+              } 
+            })
+            .catch(function(error) {
+              console.log(error);
+            });
+            this.$message.success("已取得订单列表");
     },
     completeAddBook() {
       this.$refs.addBookFormRef.validate(async valid => {
@@ -346,7 +223,7 @@ export default {
         // 上面是前端层面的新增操作，添加后端代码后删除上述代码并添加刷新页面操作
         this.dialogVisible = false;
  //       this.$refs.addBookFormRef.resetFields();
-        this.$http.post("/api/order/insert_order",{
+        this.$axios.post("https://cdn.guoshaocong.cn/addorder",{
                   customer_name: this.addBookForm.customer_name,
                   food_id: this.addBookForm.food_id,
                   food_name: this.addBookForm.food_name,
